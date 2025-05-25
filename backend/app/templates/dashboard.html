@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>News Monitoring Dashboard</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-4 text-center">News Monitoring Dashboard</h1>
+
+    <!-- SENTIMENT CARDS -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">BBC Sentiment Summary</div>
+          <div class="card-body">
+            <canvas id="bbcSentimentChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">CNN Sentiment Summary</div>
+          <div class="card-body">
+            <canvas id="cnnSentimentChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TREND CARDS -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">BBC Trending Keywords</div>
+          <div class="card-body">
+            <canvas id="bbcTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">CNN Trending Keywords</div>
+          <div class="card-body">
+            <canvas id="cnnTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Inject Flask JSON data safely -->
+  <script>
+    const bbcSentiment = {{ sentiment_counts_bbc | tojson | safe }};
+    const cnnSentiment = {{ sentiment_counts_cnn | tojson | safe }};
+    const bbcTrends = {{ trends_bbc | tojson | safe }};
+    const cnnTrends = {{ trends_cnn | tojson | safe }};
+
+    const getTrendChartData = (trendObj) => {
+      return {
+        labels: Object.keys(trendObj),
+        data: Object.values(trendObj)
+      };
+    };
+
+    // BBC Sentiment Chart
+    new Chart(document.getElementById('bbcSentimentChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [{
+          data: [bbcSentiment.positive, bbcSentiment.negative, bbcSentiment.neutral],
+          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+        }]
+      }
+    });
+
+    // CNN Sentiment Chart
+    new Chart(document.getElementById('cnnSentimentChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [{
+          data: [cnnSentiment.positive, cnnSentiment.negative, cnnSentiment.neutral],
+          backgroundColor: ['#2196F3', '#E91E63', '#9E9E9E']
+        }]
+      }
+    });
+
+    // BBC Trends Chart
+    const bbcTrend = getTrendChartData(bbcTrends);
+    new Chart(document.getElementById('bbcTrendChart'), {
+      type: 'bar',
+      data: {
+        labels: bbcTrend.labels,
+        datasets: [{
+          label: 'BBC Keywords',
+          data: bbcTrend.data,
+          backgroundColor: '#3F51B5'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // CNN Trends Chart
+    const cnnTrend = getTrendChartData(cnnTrends);
+    new Chart(document.getElementById('cnnTrendChart'), {
+      type: 'bar',
+      data: {
+        labels: cnnTrend.labels,
+        datasets: [{
+          label: 'CNN Keywords',
+          data: cnnTrend.data,
+          backgroundColor: '#FF9800'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

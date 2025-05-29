@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from . import db  # Get db from the main app init
 from .models import User, Article  # Get only models here
+from .forms import SignUpForm
 from .services.scraper import scrape_bbc
 from .services.sentiment import analyze_sentiment
 from .trend_analysis import analyze_trends
@@ -42,18 +43,28 @@ def logout():
 # Sign up route
 @auth.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        new_user = User(username=username, email=email, role=role)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash(f'Account created for {username}!', 'success')
+    form = SignUpForm()
+    if form.validate_on_submit():
+        user = User(
+                username = form.username.data,
+                email    = form.email.data,
+                role     = form.role.data
+            )
+        user.set_password(form.password.data)
+        # Try adding the new user to the database
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash("Account created successfully. Please Log In", "success")
+        except Exception as e:
+            db.session.rollback()  # Rollback on error
+            flash('An error occurred while creating your account. Please try again.')
+            print(f"Error: {e}")  # Optionally log the error for debugging purposes
+        finally:
+            db.session.close()
         return redirect(url_for('auth.login'))
-    return render_template('signup.html')
+    return render_template('signup.html', form=form)  # Change this to 'signup.html' if needed
+
 
 # Dashboard route (protected)
 @main.route('/dashboard')
